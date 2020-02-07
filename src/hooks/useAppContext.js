@@ -3,7 +3,7 @@ import React, { useState } from "react";
 const AppContext = React.createContext([{}, () => {}]);
 
 const DEFAULT_STATE = {
-  message: "Hello from context!"
+  message: "Hello from Free-svg-viewer!"
 };
 
 const AppContextProvider = props => {

@@ -1,10 +1,10 @@
 {
-  "name": "my-electron-react-start",
-  "description": "electron create-react-app starter",
+  "name": "free-svg-viewer",
+  "description": "UI for viewing and selecting .svg graphic files",
   "version": "0.1.0",
   "author": {
-    "name": "my-name",
-    "email": "my-email@domain.com",
+    "name": "Amit Kaplinsky",
+    "email": "amitka111@gmail.com",
     "url": "https://my-website.com"
   },
   "private": true,
@@ -57,10 +57,10 @@
   },
   "build": {
     "appId": "com.my-website.my-app",
-    "productName": "MyApp",
+    "productName": "Free-svg-viewer",
     "copyright": "Copyright © 2019 ${author}",
     "mac": {
-      "category": "public.app-category.utilities"
+      "category": "public.app-category.graphicDesign"
     },
     "files": [
       "build/**/*",
