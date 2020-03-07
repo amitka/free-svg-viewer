@@ -1,8 +1,10 @@
 // Modules to control application life and create native browser window
-const { app, BrowserWindow, Menu } = require("electron");
+const { app, BrowserWindow, dialog, Menu, ipcMain } = require("electron");
 const path = require("path");
+const fs = require("fs");
 const isDev = require("electron-is-dev");
 const appMenu = require("./appMenu");
+const hiTree = require("./hiTree");
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -14,6 +16,7 @@ function createWindow() {
     width: 1280,
     height: 800,
     webPreferences: {
+      nodeIntegration: true,
       preload: path.join(__dirname, "preload.js")
     }
   });
@@ -24,11 +27,6 @@ function createWindow() {
       ? "http://localhost:3000"
       : `file://${path.join(__dirname, "../build/index.html")}`
   );
-
-  // APP MENU
-  const template = appMenu.template;
-  const menu = Menu.buildFromTemplate(template);
-  Menu.setApplicationMenu(menu);
 
   // Show chrome developer tools when in dev environment.
   if (isDev) {
@@ -42,6 +40,11 @@ function createWindow() {
     // when you should delete the corresponding element.
     mainWindow = null;
   });
+
+  // APP MENU
+  const template = appMenu.template;
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 }
 
 // This method will be called when Electron has finished
@@ -64,3 +67,76 @@ app.on("activate", function() {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+
+// ------------------//
+//      EVENTS      //
+// -----------------//
+
+//Renderer Process Events (from React)
+ipcMain.on("rendererEvent", (event, data) => {
+  console.log("rendererEvent..", data);
+  if (data.appIsReady) {
+    //LOAD ICONS FOLDER PATH FROM FILE
+    getDefaultPathFromFile();
+  }
+});
+
+// App Menu Events
+appMenu.events.on("openDirEvent", function() {
+  // OPEN FOLDER DIALOG
+  dialog
+    .showOpenDialog(mainWindow, {
+      title: "Select your icons root directory...",
+      defaultPath: "",
+      properties: ["openDirectory"]
+    })
+    .then(result => {
+      if (result.filePaths[0]) {
+        const path = result.filePaths[0];
+        buildFileTreeFromPath(path);
+        writeDefaultPathToFile(path);
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    });
+});
+
+// ------------------//
+//      METHODS     //
+// -----------------//
+
+const buildFileTreeFromPath = path => {
+  // ONLY SVG
+  const onlySvgFilter = /\.(svg)$/i;
+  //
+  const fileTree = hiTree.build(path, [], onlySvgFilter);
+  //
+  const json = JSON.stringify(fileTree);
+  fs.writeFile("tree.json", json, "utf8", () => {
+    console.log("file tree was changed..");
+  });
+  //
+  const fileTreeData = { path: path, tree: fileTree };
+  console.log("fire event iconsFolderEvent..", fileTreeData);
+  mainWindow.webContents.send("iconsFolderEvent", fileTreeData);
+};
+
+const getDefaultPathFromFile = () => {
+  fs.readFile("./path.txt", "utf8", (err, data) => {
+    if (err) {
+      console.log("path.txt was not found...", err);
+      mainWindow.webContents.send("iconsFolderEvent", {});
+    }
+    if (data !== undefined) {
+      console.log("path.txt= ", data);
+      buildFileTreeFromPath(data);
+    }
+  });
+};
+
+const writeDefaultPathToFile = str => {
+  fs.writeFile("./path.txt", str, "utf8", function() {
+    console.log("path.txt was changed...");
+  });
+};

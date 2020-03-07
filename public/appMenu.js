@@ -1,6 +1,8 @@
 const { app } = require("electron");
-
+const EventEmitter = require("events");
+const emitter = new EventEmitter();
 const isMac = process.platform === "darwin";
+
 const defaultMenu = [
   // { role: 'appMenu' }
   ...(isMac
@@ -116,7 +118,18 @@ const customMenu = [
     : []),
   {
     label: "File",
-    submenu: [isMac ? { role: "close" } : { role: "quit" }]
+    submenu: [
+      {
+        label: "Open Directory",
+        accelerator: "CmdOrCtrl+O",
+        click() {
+          console.log("Open Directory...");
+          emitter.emit("openDirEvent");
+        }
+      },
+      { type: "separator" },
+      isMac ? { role: "close" } : { role: "quit" }
+    ]
   },
   {
     label: "CustomMenuItem",
@@ -133,5 +146,6 @@ const customMenu = [
 ];
 
 module.exports = {
-  template: customMenu
+  template: customMenu,
+  events: emitter
 };

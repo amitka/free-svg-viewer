@@ -1,12 +1,39 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { AppContext } from "../../hooks/useAppContext";
+import DirTree from "../../components/DirTree";
+import Gallery from "../../components/Gallery";
+import Preview from "../../components/Preview";
+
+const { ipcRenderer } = window.require("electron");
 
 function App() {
-  const [state] = useContext(AppContext);
+  const [appState, setAppState] = useContext(AppContext);
+
+  useEffect(() => {
+    // EMIT APP READY EVENT
+    ipcRenderer.send("rendererEvent", { appIsReady: true });
+  }, []);
+
+  useEffect(() => {
+    console.log("App useEffect..");
+    ipcRenderer.on("iconsFolderEvent", (event, data) => {
+      setAppState(appState => ({
+        ...appState,
+        fileTree: data.tree,
+        defaultPath: data.path
+      }));
+    });
+    // CLEANUP
+    return () => {
+      ipcRenderer.removeAllListeners("iconsFolderEvent");
+    };
+  });
+
   return (
     <main className="App">
-      <h1>Free-svg-viewer</h1>
-      <h4>{state.message}</h4>
+      <DirTree />
+      <Gallery />
+      <Preview />
     </main>
   );
 }

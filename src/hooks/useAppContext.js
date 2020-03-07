@@ -1,13 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const AppContext = React.createContext([{}, () => {}]);
 
 const DEFAULT_STATE = {
-  message: "Hello from Free-svg-viewer!"
+  defaultPath: "",
+  fileTree: []
 };
 
 const AppContextProvider = props => {
   const [state, setState] = useState(DEFAULT_STATE);
+
+  useEffect(() => {
+    console.log(state);
+  });
+
   return (
     <AppContext.Provider value={[state, setState]}>
       {props.children}
